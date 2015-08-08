@@ -1,0 +1,27 @@
+{
+  "name": "mocha-js-reporter",
+  "version": "1.0.0",
+  "description": "send JSON results of a mocha test to a callback function",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danthareja/mocha-js-reporter.git"
+  },
+  "keywords": [
+    "mocha",
+    "js",
+    "reporter"
+  ],
+  "author": "Dan Thareja <danthareja@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/danthareja/mocha-js-reporter/issues"
+  },
+  "homepage": "https://github.com/danthareja/mocha-js-reporter",
+  "dependencies": {
+    "mocha": "^2.2.5"
+  }
+}
