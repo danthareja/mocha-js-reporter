@@ -9,7 +9,7 @@ npm install mocha-js-reporter
 ###Run Mocha programmatically
 ```js
 var Mocha = require('mocha'),
-    mochaReporterWrapper = require('mocha-js-reporter'),
+    mochaReporterWrapper = require('mocha-js-reporter')(Mocha),
     fs = require('fs'),
     path = require('path');
 
@@ -51,36 +51,71 @@ mocha.run(function(failures){
 
 ## Example output
 ```js
-[
-  {
-    "stats": {
-      "suites": 1,
-      "tests": 1,
-      "passes": 1,
-      "pending": 0,
-      "failures": 0,
-      "start": "2015-08-08T01:58:43.425Z",
-      "end": "2015-08-08T01:58:43.430Z",
-      "duration": 5
+{
+  "stats": {
+    "suites": 1,
+    "tests": 2,
+    "passes": 1,
+    "pending": 0,
+    "failures": 1,
+    "start": "2015-08-08T17:15:28.232Z",
+    "end": "2015-08-08T17:15:28.237Z",
+    "duration": 5
+  },
+  "tests": [
+    {
+      "title": "should do something",
+      "fullTitle": "orms-save-user-sequelize should do something",
+      "duration": 2,
+      "err": {},
+      "code": "Object.keys(sequelize.models).length.should.equal(2);"
     },
-    "tests": [
-      {
-        "title": "should do something",
-        "fullTitle": "orms-save-user-sequelize should do something",
-        "duration": 1,
-        "err": {}
-      }
-    ],
-    "pending": [],
-    "failures": [],
-    "passes": [
-      {
-        "title": "should do something",
-        "fullTitle": "orms-save-user-sequelize should do something",
-        "duration": 1,
-        "err": {}
-      }
-    ]
-  }
-]
+    {
+      "title": "should fail",
+      "fullTitle": "orms-save-user-sequelize should fail",
+      "duration": 1,
+      "err": {
+        "operator": "to be",
+        "expected": 4,
+        "message": "expected 3 to be 4",
+        "showDiff": true,
+        "actual": 3,
+        "negate": false,
+        "stack": "AssertionError: expected 3 to be 4\n    at Context.<anonymous> (sample-solution-code/problems/orms-save-user-sequelize/orms-save-user-sequelize.test.js:14:16)",
+        "_message": "expected 3 to be 4",
+        "generatedMessage": true
+      },
+      "code": "// something\n// some other comment\nvar myVar = 4;\n\n(3).should.equal(4);"
+    }
+  ],
+  "pending": [],
+  "failures": [
+    {
+      "title": "should fail",
+      "fullTitle": "orms-save-user-sequelize should fail",
+      "duration": 1,
+      "err": {
+        "operator": "to be",
+        "expected": 4,
+        "message": "expected 3 to be 4",
+        "showDiff": true,
+        "actual": 3,
+        "negate": false,
+        "stack": "AssertionError: expected 3 to be 4\n    at Context.<anonymous> (sample-solution-code/problems/orms-save-user-sequelize/orms-save-user-sequelize.test.js:14:16)",
+        "_message": "expected 3 to be 4",
+        "generatedMessage": true
+      },
+      "code": "// something\n// some other comment\nvar myVar = 4;\n\n(3).should.equal(4);"
+    }
+  ],
+  "passes": [
+    {
+      "title": "should do something",
+      "fullTitle": "orms-save-user-sequelize should do something",
+      "duration": 2,
+      "err": {},
+      "code": "Object.keys(sequelize.models).length.should.equal(2);"
+    }
+  ]
+}
 ```

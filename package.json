@@ -21,7 +21,5 @@
     "url": "https://github.com/danthareja/mocha-js-reporter/issues"
   },
   "homepage": "https://github.com/danthareja/mocha-js-reporter",
-  "dependencies": {
-    "mocha": "^2.2.5"
-  }
+  "dependencies": {}
 }
