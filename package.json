@@ -1,6 +1,6 @@
 {
   "name": "mocha-js-reporter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "send JSON results of a mocha test to a callback function",
   "main": "index.js",
   "scripts": {
