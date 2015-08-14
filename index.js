@@ -2,95 +2,171 @@
  * Expose `JSON`.
  */
 
-module.exports = function(Mocha) {
+module.exports = {
+  reporter: JSONReporter,
+  wrapper: JSONReporterWrapper
+}
 
-  /**
-   * Return a new `JSON` reporter that executes a callback on the
-   * test's results.
-   *
-   * @api public
-   * @param {Function} callback that accepts json results
-   * @returns {Reporter}
-   */
-  return function JSONReporterWrapper(callback) {
-    return function JSONReporter(runner) {
-      Mocha.reporters.Base.call(this, runner);
+/**
+ * Return a new `JSON` reporter that executes a callback on the
+ * test's results.
+ *
+ * @api public
+ * @param {Function} callback that accepts json results
+ * @returns {Reporter}
+ */
 
-      var self = this;
-      var tests = [];
-      var pending = [];
-      var failures = [];
-      var passes = [];
+function JSONReporterWrapper(done) {
+  JSONReporter.$onComplete = done;
+  return JSONReporter;
+}
 
-      runner.on('test end', function(test) {
-        tests.push(test);
-      });
+/**
+ * `JSON` reporter that executes a callback on the
+ * test's results.
+ *
+ * Inject a callback into it by assigning a function to JSONReporter.$onComplete
+ *
+ * @api public
+ * @returns {Reporter}
+ */
 
-      runner.on('pass', function(test) {
-        passes.push(test);
-      });
 
-      runner.on('fail', function(test) {
-        failures.push(test);
-      });
+// Should be invoked with itself as context to look for $onComplete property correctly
+function JSONReporter(runner) {
+  var stats = { suites: 0, tests: 0, passes: 0, pending: 0, failures: 0 };
+  var tests = [];
+  var pending = [];
+  var failures = [];
+  var passes = [];
 
-      runner.on('pending', function(test) {
-        pending.push(test);
-      });
+  runner.on('start', function() {
+    stats.start = new Date();
+  });
 
-      runner.on('end', function() {
-        var obj = {
-          stats: self.stats,
-          tests: tests.map(clean),
-          pending: pending.map(clean),
-          failures: failures.map(clean),
-          passes: passes.map(clean)
-        };
+  runner.on('suite', function(suite) {
+    suite.root || stats.suites++;
+  });
 
-        runner.testResults = obj;
-        callback(obj);
-      });
+  runner.on('test end', function(test) {
+    stats.tests++;
+    tests.push(test);
+  });
+
+  runner.on('pass', function(test) {
+    if (test.duration > test.slow()) {
+      test.speed = 'slow';
+    } else if (test.duration > test.slow() / 2) {
+      test.speed = 'medium';
+    } else {
+      test.speed = 'fast';
     }
-  }
 
-  /**
-   * Return a plain-object representation of `test`
-   * free of cyclic properties etc.
-   *
-   * @api private
-   * @param {Object} test
-   * @return {Object}
-   */
-  function clean(test) {
-    return {
-      title: test.title,
-      fullTitle: test.fullTitle(),
-      duration: test.duration,
-      err: errorJSON(test.err || {}),
-      code: Mocha.utils.clean(test.fn.toString())
+    stats.passes++;
+    passes.push(test);
+  });
+
+  runner.on('fail', function(test, err) {
+    stats.failures++;
+    test.err = err;
+    failures.push(test);
+  });
+
+  runner.on('pending', function(test) {
+    stats.pending++;
+    pending.push(test);
+  });
+
+  runner.on('end', function() {
+    stats.end = new Date();
+    stats.duration = new Date() - stats.start;
+
+    var obj = {
+      stats: stats,
+      tests: tests.map(format),
+      pending: pending.map(format),
+      failures: failures.map(format),
+      passes: passes.map(format)
     };
-  }
 
-  /**
-   * Transform `error` into a JSON object.
-   *
-   * @api private
-   * @param {Error} err
-   * @return {Object}
-   */
-  function errorJSON(err) {
-    return Object.getOwnPropertyNames(err)
-      .reduce(function(output, key) {
-        // Remove any key whose value cannot be stringified
-        try {
-          JSON.stringify(err[key]);
-        } catch(e) {
-          if (e.message === 'Converting circular structure to JSON')
-            return output;
-        }
-        // Value is not circular, add it to our output
-        output[key] = err[key];
-        return output;
-      }, {});
-  }
+    JSONReporter.$onComplete(obj);
+  });
+}
+
+// Default callback
+JSONReporter.$onComplete = function(output){
+  process.stdout.write(JSON.stringify(output, null, 2));
 };
+
+/**
+ * Return a plain-object representation of `test`
+ * free of cyclic properties etc.
+ *
+ * @api private
+ * @param {Object} test
+ * @return {Object}
+ */
+function format(test) {
+  return {
+    title: test.title,
+    fullTitle: test.fullTitle(),
+    duration: test.duration,
+    err: errorJSON(test.err || {}),
+    code: clean(test.fn.toString())
+  };
+}
+
+/**
+ * Trim the given `str`.
+ *
+ * @api private
+ * @param {string} str
+ * @return {string}
+ */
+function trim(str) {
+  return str.replace(/^\s+|\s+$/g, '');
+};
+
+/**
+ * Strip the function definition from `str`, and re-indent for pre whitespace.
+ *
+ * @param {string} str
+ * @return {string}
+ */
+function clean(str) {
+  str = str
+    .replace(/\r\n?|[\n\u2028\u2029]/g, '\n').replace(/^\uFEFF/, '')
+    .replace(/^function *\(.*\)\s*{|\(.*\) *=> *{?/, '')
+    .replace(/\s+\}$/, '');
+
+  var spaces = str.match(/^\n?( *)/)[1].length;
+  var tabs = str.match(/^\n?(\t*)/)[1].length;
+  var re = new RegExp('^\n?' + (tabs ? '\t' : ' ') + '{' + (tabs ? tabs : spaces) + '}', 'gm');
+
+  str = str.replace(re, '');
+
+  return trim(str);
+};
+
+/**
+ * Transform `error` into a JSON object.
+ *
+ * @api private
+ * @param {Error} err
+ * @return {Object}
+ */
+function errorJSON(err) {
+  return Object.getOwnPropertyNames(err)
+    .reduce(function(output, key) {
+      // Remove any key whose value cannot be stringified
+      try {
+        JSON.stringify(err[key]);
+      } catch(e) {
+        if (e.message === 'Converting circular structure to JSON')
+          return output;
+      }
+      // Value is not circular, add it to our output
+      output[key] = err[key];
+      return output;
+    }, {});
+}

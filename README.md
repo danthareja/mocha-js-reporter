@@ -1,15 +1,35 @@
 # Mocha JS Reporter
 > send JSON results of a karma test to a callback function
 
+Define a callback function to handle test results two different ways. Assume our callback exists like so:
+```js
+var mochaCallback = function(testResults) {
+  // Do anything you like with the test results here
+  console.log(testResults)
+}
+```
+We can tell our reporter about the callback in two ways:
+```js
+var mochaReporterWrapper = require('mocha-js-reporter').wrapper;
+var mochaReporter = mochaReporterWrapper(mochaCallback);
+```
+Or
+```js
+var mochaReporter = require('mocha-js-reporter').reporter;
+mochaReporter.$onComplete = mochaCallback;
+```
+Note: `mochaCallback` will write JSON to `process.stdout` if not explicitly defined
+
 ## Usage
 ### Install the reporter
 ```
 npm install mocha-js-reporter
 ```
-###Run Mocha programmatically
+
+### Run Mocha programmatically
 ```js
 var Mocha = require('mocha'),
-    mochaReporterWrapper = require('mocha-js-reporter')(Mocha),
+    mochaReporterWrapper = require('mocha-js-reporter').wrapper, // or .reporter as above
     fs = require('fs'),
     path = require('path');
 
