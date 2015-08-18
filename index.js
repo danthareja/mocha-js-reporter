@@ -11,7 +11,6 @@
     root.MochaJSReporter = factory(root.Mocha);
   }
 }(this, function(Mocha) {
-
   /**
    * Return a new `JSON` reporter that holds a callback in closure
    * and executes it on the reporter's test results.
@@ -94,32 +93,24 @@
       title: test.title,
       fullTitle: test.fullTitle(),
       duration: test.duration,
-      err: errorJSON(test.err || {}),
+      err: formatError(test.err),
       code: Mocha.utils.clean(test.fn.toString())
     };
   }
 
   /**
-   * Transform `error` into a JSON object.
+   * Pluck important properties from an error
    *
    * @api private
-   * @param {Error} err
+   * @param {Object} error
    * @return {Object}
    */
-  function errorJSON(err) {
-    return Object.getOwnPropertyNames(err)
-      .reduce(function(output, key) {
-        // Remove any key whose value cannot be stringified
-        try {
-          JSON.stringify(err[key]);
-        } catch(e) {
-          if (e.message === 'Converting circular structure to JSON')
-            return output;
-        }
-        // Value is not circular, add it to our output
-        output[key] = err[key];
-        return output;
-      }, {});
+  function formatError(error) {
+    if (!error) return {};
+    return {
+      message: error.message,
+      stack: Mocha.utils.stackTraceFilter()(error.stack),
+    }
   }
 
   /**
